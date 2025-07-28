@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+env/
+
+# Environment variables (sensitive)
+.env
+
+# Allure Reports (generated)
+reports/
+allure-results/
+allure-history/
+
+# IDE files
+.vscode/
+.idea/
