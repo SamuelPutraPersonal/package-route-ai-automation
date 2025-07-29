@@ -31,13 +31,34 @@ jobs:
       - name: Set up Java for Allure (required by Allure Command Line)
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin" # A common OpenJDK distribution
-          java-version: "17" # Java 17 is a good LTS version
+          distribution: "temurin"
+          java-version: "17"
 
-      - name: Install Allure Command Line
+      # --- REMOVE THE OLD "Install Allure Command Line" STEP HERE ---
+      # --- ADD THE NEW MANUAL DOWNLOAD AND INSTALL STEP BELOW ---
+
+      - name: Download and Install Allure Command Line (Directly) # NEW STEP
         run: |
-          npm install -g allure-commandline # Use npm to install Allure CLI
-          echo "::add-path::$(npm root -g)/.bin" # This line adds npm's global bin to PATH
+          ALLURE_VERSION="2.32.0" # You can update this to the latest stable version if needed
+          ALLURE_ZIP="allure-${ALLURE_VERSION}.zip"
+          ALLURE_URL="https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/${ALLURE_ZIP}"
+
+          echo "Downloading Allure CLI from: $ALLURE_URL"
+          wget "$ALLURE_URL" -O "$ALLURE_ZIP" || { echo "Failed to download Allure CLI"; exit 1; }
+
+          echo "Unzipping Allure CLI..."
+          unzip "$ALLURE_ZIP" -d allure-cli-temp || { echo "Failed to unzip Allure CLI"; exit 1; }
+
+          # The extracted content will be in allure-cli-temp/allure-2.x.x
+          # Move it to a cleaner path
+          mv allure-cli-temp/allure-${ALLURE_VERSION} allure-cli || { echo "Failed to move Allure CLI folder"; exit 1; }
+
+          # Add Allure's bin directory to the PATH for subsequent steps
+          echo "::add-path::$(pwd)/allure-cli/bin"
+
+          echo "Verifying Allure CLI installation..."
+          allure --version || { echo "Allure command not found after installation"; exit 1; }
+          echo "Allure CLI installed successfully."
 
       - name: Create .env file for SUT URL
         run: |
@@ -47,21 +68,15 @@ jobs:
         run: |
           pytest --alluredir=allure-results # Output raw results to 'allure-results' folder
 
-      # --- REMOVE THE OLD "GENERATE ALLURE REPORT" STEP HERE ---
-      # --- ADD THE NEW MANUAL GENERATION STEP BELOW ---
-
-      - name: Generate Allure Report (Manual) # NEW STEP
-        if: always() # Runs even if tests fail, so you always get a report
+      - name: Generate Allure Report (Manual)
+        if: always()
         run: |
           allure generate allure-results --clean -o allure-report
-          # This command takes the raw 'allure-results' and creates the HTML report
-          # in a new folder named 'allure-report'.
-          # '--clean' ensures the output directory is clean before generation.
 
       - name: Deploy Allure Report to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: allure-report # <-- IMPORTANT: CHANGE THIS TO THE NEW OUTPUT FOLDER
+          publish_dir: allure-report
           force_orphan: true
