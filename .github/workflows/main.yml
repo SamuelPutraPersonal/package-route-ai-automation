@@ -1,0 +1,76 @@
+# .github/workflows/main.yml
+name: PackageRouteAI Test Automation CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test-report:
+    runs-on: ubuntu-latest # Use a Linux environment for consistency
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Get your code from the repo
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9" # Or a newer version like '3.10', '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Install Pillow explicitly if not already covered by requirements.txt for dummy image generation
+          pip install Pillow
+
+      - name: Set up Java for Allure (required by Allure Command Line)
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin" # A common OpenJDK distribution
+          java-version: "17" # Java 17 is a good LTS version
+
+      - name: Install Allure Command Line
+        run: |
+          npm install -g allure-commandline # Use npm to install Allure CLI
+
+      - name: Create .env file for SUT URL
+        # This step creates the .env file with the SUT URL for the tests to use.
+        # In a real CI/CD, the SUT would be deployed or run as a service.
+        # For this example, we'll assume the SUT is available at a fixed URL
+        # or we'll mock it if it's not actually running.
+        # For now, we'll use a placeholder that matches our local setup.
+        # In a more advanced setup, you'd spin up the SUT as a service/container here.
+        run: |
+          echo "PRIME_VISION_SUT_API_BASE_URL=http://localhost:5000" >> .env
+          # If the SUT was a separate service in CI, this URL would change
+          # e.g., PRIME_VISION_SUT_API_BASE_URL=http://package-route-ai-sut:5000
+
+      - name: Run Pytest tests and generate Allure results
+        run: |
+          pytest --alluredir=allure-results # Output raw results to 'allure-results' folder
+
+      - name: Generate Allure Report
+        # This action generates the HTML report from the raw results.
+        # It runs even if tests fail (if: always()) so you always get a report.
+        if: always()
+        uses: simple-elf/allure-action@v1.8 # Action to generate Allure reports
+        with:
+          allure_results: allure-results # Input folder for raw results
+          github_token: ${{ secrets.GITHUB_TOKEN }} # GitHub's built-in token for actions
+          allure_history: allure-history # For historical trends in reports
+          keep_reports: 20 # Keep last 20 reports
+
+      - name: Deploy Allure Report to GitHub Pages
+        # This action publishes the generated HTML report to GitHub Pages.
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3 # Action to deploy to GitHub Pages
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-history # The directory containing the generated report
+          force_orphan: true # Overwrite previous content on GitHub Pages
