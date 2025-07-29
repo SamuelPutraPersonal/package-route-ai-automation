@@ -59,7 +59,7 @@ jobs:
         # This action generates the HTML report from the raw results.
         # It runs even if tests fail (if: always()) so you always get a report.
         if: always()
-        uses: simple-elf/allure-action@v1.8 # Action to generate Allure reports
+        uses: simple-elf/allure-action@v1 # Action to generate Allure reports
         with:
           allure_results: allure-results # Input folder for raw results
           github_token: ${{ secrets.GITHUB_TOKEN }} # GitHub's built-in token for actions
