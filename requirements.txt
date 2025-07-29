@@ -1,4 +1,4 @@
 pytest
 requests
 allure-pytest
-python-dotenvcl
+python-dotenv
