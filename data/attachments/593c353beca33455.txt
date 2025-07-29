@@ -1,0 +1,1 @@
+Created dummy image: /tmp/pytest-of-runner/pytest-0/test_successful_ingestion0/test_package.jpg (823 bytes)
