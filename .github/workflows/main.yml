@@ -71,7 +71,8 @@ jobs:
       - name: Generate Allure Report (Manual)
         if: always()
         run: |
-          allure generate allure-results --clean -o allure-report
+          # Use the absolute path to the allure executable
+          $(pwd)/allure-cli/bin/allure generate allure-results --clean -o allure-report
 
       - name: Deploy Allure Report to GitHub Pages
         if: always()
