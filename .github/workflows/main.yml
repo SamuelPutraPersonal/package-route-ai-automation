@@ -62,7 +62,6 @@ jobs:
           # --- Set an environment variable for the exact path for later steps ---
           ALLURE_BIN_FULL_PATH="$(pwd)/allure-cli/bin"
           echo "ALLURE_BIN_PATH=$ALLURE_BIN_FULL_PATH" >> $GITHUB_ENV
-          echo "::add-path::$ALLURE_BIN_FULL_PATH" # Also add to PATH, just in case
 
           echo "Verifying Allure CLI installation using its full path..."
           "$ALLURE_BIN_FULL_PATH/allure" --version || { echo "Allure command not found after installation (verification failed)"; exit 1; }
