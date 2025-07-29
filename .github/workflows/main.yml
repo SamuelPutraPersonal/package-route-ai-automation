@@ -37,6 +37,7 @@ jobs:
       - name: Install Allure Command Line
         run: |
           npm install -g allure-commandline # Use npm to install Allure CLI
+          echo "::add-path::$(npm root -g)/.bin" # This line adds npm's global bin to PATH
 
       - name: Create .env file for SUT URL
         run: |
