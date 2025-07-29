@@ -34,10 +34,7 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      # --- REMOVE THE OLD "Install Allure Command Line" STEP HERE ---
-      # --- ADD THE NEW MANUAL DOWNLOAD AND INSTALL STEP BELOW ---
-
-      - name: Download and Install Allure Command Line (Directly) # NEW STEP
+      - name: Download and Install Allure Command Line (Directly)
         run: |
           ALLURE_VERSION="2.32.0" # You can update this to the latest stable version if needed
           ALLURE_ZIP="allure-${ALLURE_VERSION}.zip"
@@ -49,15 +46,26 @@ jobs:
           echo "Unzipping Allure CLI..."
           unzip "$ALLURE_ZIP" -d allure-cli-temp || { echo "Failed to unzip Allure CLI"; exit 1; }
 
+          # --- DEBUGGING OUTPUTS ---
+          echo "--- Contents of allure-cli-temp after unzip ---"
+          ls -laR allure-cli-temp/ # List contents recursively
+          echo "-----------------------------------------------"
+
           # The extracted content will be in allure-cli-temp/allure-2.x.x
           # Move it to a cleaner path
           mv allure-cli-temp/allure-${ALLURE_VERSION} allure-cli || { echo "Failed to move Allure CLI folder"; exit 1; }
 
-          # Add Allure's bin directory to the PATH for subsequent steps
-          echo "::add-path::$(pwd)/allure-cli/bin"
+          echo "--- Contents of allure-cli after move ---"
+          ls -laR allure-cli/ # List contents recursively
+          echo "-----------------------------------------"
 
-          echo "Verifying Allure CLI installation..."
-          allure --version || { echo "Allure command not found after installation"; exit 1; }
+          # --- Set an environment variable for the exact path for later steps ---
+          ALLURE_BIN_FULL_PATH="$(pwd)/allure-cli/bin"
+          echo "ALLURE_BIN_PATH=$ALLURE_BIN_FULL_PATH" >> $GITHUB_ENV
+          echo "::add-path::$ALLURE_BIN_FULL_PATH" # Also add to PATH, just in case
+
+          echo "Verifying Allure CLI installation using its full path..."
+          "$ALLURE_BIN_FULL_PATH/allure" --version || { echo "Allure command not found after installation (verification failed)"; exit 1; }
           echo "Allure CLI installed successfully."
 
       - name: Create .env file for SUT URL
@@ -71,8 +79,8 @@ jobs:
       - name: Generate Allure Report (Manual)
         if: always()
         run: |
-          # Use the correct relative path to the allure executable
-          ./allure-cli/bin/allure generate allure-results --clean -o allure-report
+          # Use the environment variable set in the previous step for the exact path
+          "$ALLURE_BIN_PATH/allure" generate allure-results --clean -o allure-report
 
       - name: Deploy Allure Report to GitHub Pages
         if: always()
